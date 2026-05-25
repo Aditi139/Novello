@@ -1,0 +1,7 @@
+-- Novello Seed Data
+-- NOTE: This file is intentionally empty.
+-- Tables are created by Spring Boot JPA (ddl-auto=update) AFTER MySQL starts.
+-- MySQL init scripts run BEFORE Spring Boot, so table inserts here would fail.
+--
+-- Book and category data is seeded via the DataLoader component in catalog-service.
+-- See: catalog-service/.../DataLoader.java

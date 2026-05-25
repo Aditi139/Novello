@@ -1,0 +1,103 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # User Service Routes
+        - id: user-service-auth
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=0
+
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+
+        # Catalog Service Routes
+        - id: catalog-service-books
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/books/**
+          filters:
+            - StripPrefix=0
+
+        - id: catalog-service-categories
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/categories/**
+          filters:
+            - StripPrefix=0
+
+        # Order Service Routes
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=0
+
+        # Payment Service Routes
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=0
+
+        # Inventory Service Routes
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - StripPrefix=0
+
+        # eBook Service Routes
+        - id: ebook-service
+          uri: ${EBOOK_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/ebooks/**
+          filters:
+            - StripPrefix=0
+
+        # Notification Service Routes
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always

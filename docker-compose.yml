@@ -1,0 +1,260 @@
+version: '3.8'
+
+networks:
+  novello-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  ebook-uploads:
+
+services:
+
+  # ─── MySQL Database ──────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: novello-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: novello_root_2024
+      MYSQL_USER: novello
+      MYSQL_PASSWORD: novello_pass_2024
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - novello-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnovello_root_2024"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 40s
+
+  # ─── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: novello-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - novello-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── User Service ─────────────────────────────────────────────────────────────
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: novello-user-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      JWT_SECRET: NovelloSuperSecretJwtKey2024ForAuthenticationAndAuthorization
+      JWT_EXPIRATION: 86400000
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── Catalog Service ──────────────────────────────────────────────────────────
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: novello-catalog-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_catalog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── Order Service ────────────────────────────────────────────────────────────
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: novello-order-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      INVENTORY_SERVICE_URL: http://inventory-service:8085
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── Payment Service ──────────────────────────────────────────────────────────
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: novello-payment-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_payments?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_YourKeyIdHere}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-YourKeySecretHere}
+      ORDER_SERVICE_URL: http://order-service:8083
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
+      SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── Inventory Service ────────────────────────────────────────────────────────
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: novello-inventory-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_inventory?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      SERVER_PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── eBook Service ────────────────────────────────────────────────────────────
+  ebook-service:
+    build:
+      context: ./ebook-service
+      dockerfile: Dockerfile
+    container_name: novello-ebook-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_ebooks?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      EBOOK_UPLOAD_DIR: /app/uploads
+      ORDER_SERVICE_URL: http://order-service:8083
+      SERVER_PORT: 8086
+    ports:
+      - "8086:8086"
+    volumes:
+      - ebook-uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── Notification Service ─────────────────────────────────────────────────────
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: novello-notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/novello_notifications?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: novello
+      SPRING_DATASOURCE_PASSWORD: novello_pass_2024
+      SERVER_PORT: 8087
+    ports:
+      - "8087:8087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - novello-network
+
+  # ─── API Gateway ──────────────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: novello-api-gateway
+    restart: unless-stopped
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+      INVENTORY_SERVICE_URL: http://inventory-service:8085
+      EBOOK_SERVICE_URL: http://ebook-service:8086
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: NovelloSuperSecretJwtKey2024ForAuthenticationAndAuthorization
+      SERVER_PORT: 8080
+    ports:
+      - "8090:8080"
+    depends_on:
+      - user-service
+      - catalog-service
+      - order-service
+      - payment-service
+      - inventory-service
+      - ebook-service
+      - notification-service
+      - redis
+    networks:
+      - novello-network
+
+  # ─── Frontend ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: novello-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - novello-network

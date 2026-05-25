@@ -1,0 +1,226 @@
+name: Novello CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/novello
+
+jobs:
+  # ── Build & Test Backend Services ────────────────────────────────────────────
+  build-user-service:
+    name: Build User Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: user-service
+        run: mvn clean package -DskipTests
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-service-jar
+          path: user-service/target/*.jar
+
+  build-catalog-service:
+    name: Build Catalog Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: catalog-service
+        run: mvn clean package -DskipTests
+
+  build-order-service:
+    name: Build Order Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: order-service
+        run: mvn clean package -DskipTests
+
+  build-payment-service:
+    name: Build Payment Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: payment-service
+        run: mvn clean package -DskipTests
+
+  build-inventory-service:
+    name: Build Inventory Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: inventory-service
+        run: mvn clean package -DskipTests
+
+  build-ebook-service:
+    name: Build eBook Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: ebook-service
+        run: mvn clean package -DskipTests
+
+  build-notification-service:
+    name: Build Notification Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: notification-service
+        run: mvn clean package -DskipTests
+
+  build-api-gateway:
+    name: Build API Gateway
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        working-directory: api-gateway
+        run: mvn clean package -DskipTests
+
+  # ── Build Frontend ────────────────────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  # ── Build & Push Docker Images ────────────────────────────────────────────────
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs:
+      - build-user-service
+      - build-catalog-service
+      - build-order-service
+      - build-payment-service
+      - build-inventory-service
+      - build-ebook-service
+      - build-notification-service
+      - build-api-gateway
+      - build-frontend
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push all images
+        run: |
+          services=("user-service" "catalog-service" "order-service" "payment-service" "inventory-service" "ebook-service" "notification-service" "api-gateway" "frontend")
+          for svc in "${services[@]}"; do
+            echo "Building $svc..."
+            # Build JAR first for backend services
+            if [ "$svc" != "frontend" ]; then
+              cd $svc && mvn clean package -DskipTests -q && cd ..
+            fi
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${svc}:${{ github.sha }} \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${svc}:latest \
+              --push \
+              ./${svc}
+            echo "✅ $svc image pushed"
+          done
+
+  # ── Integration Test ──────────────────────────────────────────────────────────
+  integration-test:
+    name: Integration Test (Docker Compose)
+    runs-on: ubuntu-latest
+    needs: [build-user-service, build-catalog-service, build-frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build all JARs
+        run: |
+          for svc in user-service catalog-service order-service payment-service inventory-service ebook-service notification-service api-gateway; do
+            cd $svc && mvn clean package -DskipTests -q && cd ..
+          done
+      - name: Start services with Docker Compose
+        run: |
+          docker compose up -d mysql redis
+          sleep 20
+          docker compose up -d user-service catalog-service
+          sleep 15
+      - name: Health check
+        run: |
+          curl -f http://localhost:8081/actuator/health || exit 1
+          curl -f http://localhost:8082/actuator/health || exit 1
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
