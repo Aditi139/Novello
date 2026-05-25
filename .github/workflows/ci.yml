@@ -178,11 +178,8 @@ jobs:
           for svc in "${services[@]}"; do
             echo "Building $svc..."
 
-            # Build JAR first for backend services
-            if [ "$svc" != "frontend" ]; then
-              cd $svc && mvn clean package -DskipTests -q && cd ..
-            fi
-
+            # Maven compilation is handled inside the Dockerfile multi-stage build
+            # No need to run mvn on the host — the builder stage does it
             docker build \
               -t novello-${svc}:latest \
               ./${svc}
@@ -205,7 +202,7 @@ jobs:
       - name: Build all JARs
         run: |
           for svc in user-service catalog-service order-service payment-service inventory-service ebook-service notification-service api-gateway; do
-            cd $svc && mvn clean package -DskipTests -q && cd ..
+            (cd $svc && mvn clean package -DskipTests -q)
           done
       - name: Start services with Docker Compose
         run: |
