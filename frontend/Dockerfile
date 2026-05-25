@@ -9,7 +9,7 @@ RUN npm ci && chmod +x node_modules/.bin/vite
 
 COPY . .
 
-RUN npm run build
+RUN npx vite build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
