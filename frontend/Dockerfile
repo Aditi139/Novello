@@ -5,11 +5,11 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci && chmod +x node_modules/.bin/vite
+RUN npm ci
 
 COPY . .
 
-RUN npx vite build
+RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
