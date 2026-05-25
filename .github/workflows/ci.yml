@@ -189,7 +189,7 @@ jobs:
               --platform linux/amd64,linux/arm64 \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${svc}:${{ github.sha }} \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${svc}:latest \
-              --push \
+              --load \
               ./${svc}
             echo "✅ $svc image pushed"
           done
