@@ -79,17 +79,26 @@ For **each** of the 7 services below, repeat these steps:
 > **Railway Variable References**: Use `${{service-name.RAILWAY_PRIVATE_DOMAIN}}` to reference
 > another service's private hostname. Railway resolves these automatically.
 
+> **PORT vs SERVER_PORT**: Railway automatically injects a `PORT` env var into every container
+> and uses it for healthchecks. All Spring Boot services are configured to read `$PORT` first
+> (via `server.port=${PORT:${SERVER_PORT:808X}}`), so **do NOT set `PORT` manually** —
+> Railway manages it. `SERVER_PORT` is only used as a local-dev fallback.
+
+> **Inter-service URLs**: The port numbers in `*_SERVICE_URL` values (`:8081`, `:8082`, etc.)
+> must match the `SERVER_PORT` you set. Railway's private networking uses these ports directly.
+
 ---
 
 ### `user-service`
 
 ```
 SERVER_PORT                 = 8081
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 JWT_SECRET                  = NovelloSuperSecretJwtKey2024ForAuthenticationAndAuthorization
 JWT_EXPIRATION              = 86400000
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -98,11 +107,12 @@ JWT_EXPIRATION              = 86400000
 
 ```
 SERVER_PORT                 = 8082
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_catalog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_catalog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 SPRING_REDIS_HOST           = ${{redis.RAILWAY_PRIVATE_DOMAIN}}
 SPRING_REDIS_PORT           = 6379
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -111,7 +121,7 @@ SPRING_REDIS_PORT           = 6379
 
 ```
 SERVER_PORT                 = 8083
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 SPRING_REDIS_HOST           = ${{redis.RAILWAY_PRIVATE_DOMAIN}}
@@ -119,6 +129,7 @@ SPRING_REDIS_PORT           = 6379
 CATALOG_SERVICE_URL         = http://${{catalog-service.RAILWAY_PRIVATE_DOMAIN}}:8082
 INVENTORY_SERVICE_URL       = http://${{inventory-service.RAILWAY_PRIVATE_DOMAIN}}:8085
 NOTIFICATION_SERVICE_URL    = http://${{notification-service.RAILWAY_PRIVATE_DOMAIN}}:8087
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -127,13 +138,14 @@ NOTIFICATION_SERVICE_URL    = http://${{notification-service.RAILWAY_PRIVATE_DOM
 
 ```
 SERVER_PORT                 = 8084
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_payments?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_payments?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 RAZORPAY_KEY_ID             = rzp_test_StVhLsAw26eEYP
 RAZORPAY_KEY_SECRET         = Q1LNDOxPweTFtEzAuWsbJA81
 ORDER_SERVICE_URL           = http://${{order-service.RAILWAY_PRIVATE_DOMAIN}}:8083
 NOTIFICATION_SERVICE_URL    = http://${{notification-service.RAILWAY_PRIVATE_DOMAIN}}:8087
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -142,9 +154,10 @@ NOTIFICATION_SERVICE_URL    = http://${{notification-service.RAILWAY_PRIVATE_DOM
 
 ```
 SERVER_PORT                 = 8085
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_inventory?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_inventory?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -153,11 +166,12 @@ SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 
 ```
 SERVER_PORT                 = 8086
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_ebooks?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_ebooks?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
 EBOOK_UPLOAD_DIR            = /app/uploads
 ORDER_SERVICE_URL           = http://${{order-service.RAILWAY_PRIVATE_DOMAIN}}:8083
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -166,9 +180,10 @@ ORDER_SERVICE_URL           = http://${{order-service.RAILWAY_PRIVATE_DOMAIN}}:8
 
 ```
 SERVER_PORT                 = 8087
-SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_notifications?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL       = jdbc:mysql://${{mysql.RAILWAY_PRIVATE_DOMAIN}}:3306/novello_notifications?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 SPRING_DATASOURCE_USERNAME  = novello
 SPRING_DATASOURCE_PASSWORD  = novello_pass_2024
+JAVA_OPTS                   = -Xmx256m -Xss512k
 ```
 
 ---
@@ -304,8 +319,10 @@ Well within the $5 included credit. ✅
 
 | Problem | Fix |
 |---|---|
+| **Healthcheck failure** | The service isn't listening on the port Railway expects. Ensure `server.port=${PORT:${SERVER_PORT:808X}}` is set in `application.properties`. Do **not** set `PORT` manually in Railway. |
 | Spring Boot OOM on start | Add `JAVA_OPTS=-Xmx256m -Xss512k` to the service env vars |
 | MySQL connection refused | Wait 2–3 min for MySQL to fully start, then redeploy the Spring Boot services |
 | Frontend shows blank/CORS error | Make sure `VITE_API_URL` is set correctly and **rebuild** the frontend service |
 | Redis connection error | Verify `SPRING_REDIS_HOST` uses the `${{redis.RAILWAY_PRIVATE_DOMAIN}}` reference |
 | 502 Bad Gateway | The upstream Spring Boot service crashed — check its Railway logs |
+| nginx healthcheck fails | The frontend Dockerfile puts `nginx.conf` in `/etc/nginx/templates/` — this auto-substitutes `${PORT}`. If using an old Dockerfile, update it. |

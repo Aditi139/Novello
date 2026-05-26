@@ -3,6 +3,8 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+# nginx:alpine with envsubst template resolves ${PORT} at startup,
+# so Railway's HTTP healthcheck hits the right port automatically.
 healthcheckPath = "/"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"

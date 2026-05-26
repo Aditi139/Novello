@@ -1,5 +1,6 @@
+# Railway injects PORT at runtime; fall back to SERVER_PORT for local dev
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}}
 
 spring:
   application:
