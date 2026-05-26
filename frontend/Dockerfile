@@ -9,6 +9,12 @@ RUN npm ci
 
 COPY . .
 
+# Inject the production API Gateway URL at build time.
+# On Railway: set VITE_API_URL as a Build Variable in the frontend service.
+# e.g. https://novello-api-gateway.up.railway.app
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
 # Stage 2: Serve with Nginx

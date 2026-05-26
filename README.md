@@ -44,6 +44,8 @@ A premium full-stack online bookstore platform built using **React ⚛️**, **S
 ### 🚀 DevOps & Deployment
 - Docker 🐳
 - Docker Compose 📦
+- Railway ☁️ (Cloud Deployment)
+- GitHub Actions 🔄 (CI/CD)
 - Jenkins 🔄
 
 ---
@@ -114,6 +116,37 @@ docker ps
 
 ---
 
+## ☁️ Railway Cloud Deployment
+
+Novello is fully deployable on [Railway](https://railway.app) with auto-redeploy on every GitHub push.
+
+### 🌐 Live URLs *(update after deployment)*
+
+| Service | URL |
+|---|---|
+| 🎨 Frontend | `https://novello-frontend.up.railway.app` |
+| 🌐 API Gateway | `https://novello-api-gateway.up.railway.app` |
+
+### ⚡ Quick Deploy Verification
+
+```bash
+# Health check
+curl https://novello-api-gateway.up.railway.app/actuator/health
+
+# Books API
+curl https://novello-api-gateway.up.railway.app/api/books?page=0&size=5
+```
+
+### 📋 Full Deployment Guide
+
+See **[RAILWAY_DEPLOY.md](./RAILWAY_DEPLOY.md)** for:
+- Step-by-step Railway dashboard setup
+- All environment variables per service
+- GitHub Actions secrets configuration
+- Cost estimates & troubleshooting
+
+---
+
 ## 🔄 Jenkins CI/CD
 
 This project includes Jenkins pipeline configuration using: `Jenkinsfile`
@@ -131,7 +164,9 @@ Pipeline supports:
 - 🧩 Scalable Microservices Architecture
 - 🎨 Premium Modern UI
 - 🐳 Dockerized Full Stack Deployment
-- 📚 Realistic Book Catalog
+- ☁️ Railway Cloud Deployment
+- 🔄 GitHub Actions CI/CD (auto-deploy on push)
+- 📚 Realistic Book Catalog (25 books, 8 categories)
 - 📱 Responsive & Interactive Frontend
 - ⚡ Fast API Communication
 - 🌐 API Gateway Based Architecture
