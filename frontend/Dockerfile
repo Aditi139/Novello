@@ -9,7 +9,7 @@ RUN npm ci
 COPY . .
 
 # Inject the production API Gateway URL at build time.
-# Set VITE_API_URL as a Build Variable in the Railway frontend service.
+# On Railway: set VITE_API_URL as a Build Variable in the frontend service.
 # e.g. https://novello-api-gateway.up.railway.app
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
@@ -19,16 +19,19 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
+# Copy built React app
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Place config in /etc/nginx/templates/ — the official nginx:alpine image
-# automatically runs `envsubst` on every *.template file in this directory
-# at container startup, outputting to /etc/nginx/conf.d/.
-# This lets us use ${PORT} in nginx.conf so Railway's dynamic port is honoured.
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+# Copy nginx config as a template (PORT will be substituted at startup)
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-# Default port for local Docker Compose (Railway overrides via $PORT env var)
-EXPOSE 80
+# Copy and enable startup script that runs envsubst then launches nginx
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Railway injects $PORT — our start.sh substitutes it into nginx config.
+# ENV PORT=80 is the local Docker Compose fallback (Railway always overrides).
 ENV PORT=80
+EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/start.sh"]
