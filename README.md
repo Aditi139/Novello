@@ -1,172 +1,194 @@
-# Novello — 📚 Microservices-Based Online Bookstore
+# 📚 Novello — Online Bookstore System
 
-A premium full-stack online bookstore platform built using **React ⚛️**, **Spring Boot Microservices ☕**, and **Docker 🐳**. Novello supports both **Hardcopy Books 📖** and **eBooks 📱** with modern UI, digital delivery, and scalable microservices architecture.
+A **modern microservices-based online bookstore** built with Spring Boot, React, Docker, and **Razorpay payment gateway**.
 
----
-
-## ✨ Features
-
-- 🎨 Modern premium bookstore UI
-- 📚 Hardcopy + eBook purchasing
-- ⚡ Instant digital eBook delivery
-- 📦 Order management system
-- 🔐 Secure authentication
-- 🗂️ Category-based catalog browsing
-- 📱 Fully responsive design
-- 🧩 Microservices architecture
-- 🐳 Dockerized deployment
-- 🌐 API Gateway routing
-- ⚡ Redis caching support
-- 📖 Realistic book catalog system
-
----
-
-## 🛠️ Tech Stack
-
-### 🎨 Frontend
-- React.js ⚛️
-- Vite ⚡
-- JavaScript 📜
-- CSS 🎨
-- Nginx 🌐
-
-### ⚙️ Backend
-- Spring Boot ☕
-- Java Microservices 🧩
-- REST APIs 🔗
-- Maven 📦
-- JWT Authentication 🔐
-
-### 🗄️ Database & Cache
-- MySQL 🐬
-- Redis ⚡
-
-### 🚀 DevOps & Deployment
-- Docker 🐳
-- Docker Compose 📦
-- Railway ☁️ (Cloud Deployment)
-- GitHub Actions 🔄 (CI/CD)
-- Jenkins 🔄
-
----
-
-## 🧩 Microservices
-
-| Service | Purpose |
-|---|---|
-| 🌐 API Gateway | Central request routing |
-| 👤 User Service | Authentication & users |
-| 📚 Catalog Service | Books & categories |
-| 📦 Order Service | Orders management |
-| 📊 Inventory Service | Book stock handling |
-| 📱 Ebook Service | eBook downloads |
-| 🔔 Notification Service | Notifications & alerts |
-
----
-
-## 📂 Project Structure
+## 🏗️ Architecture
 
 ```
-Novello/
-│
-├── 🌐 api-gateway/
-├── 👤 user-service/
-├── 📚 catalog-service/
-├── 📦 order-service/
-├── 📊 inventory-service/
-├── 📱 ebook-service/
-├── 🔔 notification-service/
-├── 🎨 frontend/
-├── 🗄️ db-init/
-├── 🐳 docker-compose.yml
-├── 🔄 Jenkinsfile
-└── 📄 README.md
+React Frontend (port 3000)
+        ↓
+API Gateway (port 8090)
+        ↓
+┌──────────┬───────────┬─────────┬───────────┬───────────┬──────────────┬──────────────┐
+│  User    │  Catalog  │  Order  │  Payment  │ Inventory │    eBook     │Notification  │
+│  8081    │  8082     │  8083   │  8084     │  8085     │  8086      │   8087       │
+└──────────┴───────────┴─────────┴───────────┴───────────┴──────────────┴──────────────┘
+        ↓
+MySQL (3306) + Redis (6379)
 ```
 
----
+## 🚀 Quick Start
 
-## ⚙️ Installation & Setup
+### Prerequisites
+- Docker Desktop installed and running
+- Git
 
-### 📥 Clone Repository
-
+### 1. Clone the repository
 ```bash
-git clone https://github.com/Aditi139/Novello.git
-cd Novello
+git clone https://github.com/your-org/novello.git
+cd novello
 ```
 
-### ▶️ Run Complete Project
+### 2. Set up Razorpay (FREE test account)
+1. Go to [dashboard.razorpay.com](https://dashboard.razorpay.com) and create a free account
+2. Go to **Settings → API Keys** → Generate Test Key
+3. Copy your **Key ID** and **Key Secret**
 
+### 3. Configure environment
 ```bash
-docker compose up --build
+cp .env.example .env
+# Edit .env and add your Razorpay keys:
+# RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxxxxx
+# RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### ⏹️ Stop Project
-
+### 4. Build and run with Docker Compose
 ```bash
-docker compose down
+# Build all images (takes 5-10 minutes first time)
+docker-compose up --build
+
+# Or run in background:
+docker-compose up --build -d
 ```
 
-### 🐳 Docker Containers
-
-Check running containers:
-
-```bash
-docker ps
-```
-
----
-
-## ☁️ Railway Cloud Deployment
-
-Novello is fully deployable on [Railway](https://railway.app) with auto-redeploy on every GitHub push.
-
-### 🌐 Live URLs *(update after deployment)*
-
+### 5. Access the application
 | Service | URL |
-|---|---|
-| 🎨 Frontend | `https://novello-frontend.up.railway.app` |
-| 🌐 API Gateway | `https://novello-api-gateway.up.railway.app` |
+|---------|-----|
+| 🌐 Frontend | http://localhost:3000 |
+| 🔌 API Gateway | http://localhost:8090 |
+| 👤 User Service | http://localhost:8081 |
+| 📚 Catalog | http://localhost:8082 |
+| 🛒 Orders | http://localhost:8083 |
+| 💳 Payments | http://localhost:8084 |
+| 📦 Inventory | http://localhost:8085 |
+| 📱 eBooks | http://localhost:8086 |
+| 🔔 Notifications | http://localhost:8087 |
 
-### ⚡ Quick Deploy Verification
+### 6. Default admin account
+After starting, register any account OR use the seeded admin:
+- **Email:** admin@novello.com
+- **Password:** admin123
+
+> **Note:** To create the admin user, call POST `/api/auth/register` with role ADMIN, or manually update the DB:
+> ```sql
+> UPDATE novello_users.users SET role = 'ADMIN' WHERE email = 'your@email.com';
+> ```
+
+## 💳 Payment Flow (Razorpay)
+
+1. Add books to cart
+2. Proceed to checkout
+3. Enter shipping address
+4. Click **"Pay Now"** → Razorpay modal opens
+5. Use test card: `4111 1111 1111 1111`, CVV: `123`, Expiry: any future date
+6. Or use test UPI: `success@razorpay`
+7. Payment verified server-side → Order confirmed!
+
+## 🧪 Running Tests
 
 ```bash
-# Health check
-curl https://novello-api-gateway.up.railway.app/actuator/health
+# Test individual service
+cd user-service && mvn test
 
-# Books API
-curl https://novello-api-gateway.up.railway.app/api/books?page=0&size=5
+# Run all backend tests
+for svc in user-service catalog-service order-service; do
+  cd $svc && mvn test && cd ..
+done
 ```
 
-### 📋 Full Deployment Guide
+## 🔧 Development (without Docker)
 
-See **[RAILWAY_DEPLOY.md](./RAILWAY_DEPLOY.md)** for:
-- Step-by-step Railway dashboard setup
-- All environment variables per service
-- GitHub Actions secrets configuration
-- Cost estimates & troubleshooting
+### Backend (each service)
+```bash
+cd user-service
+mvn spring-boot:run
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 📁 Project Structure
+
+```
+novello/
+├── frontend/           # React + Vite frontend
+├── api-gateway/        # Spring Cloud Gateway
+├── user-service/       # Authentication & users
+├── catalog-service/    # Books & categories
+├── order-service/      # Cart & orders
+├── payment-service/    # Razorpay integration
+├── inventory-service/  # Stock management
+├── ebook-service/      # PDF uploads & downloads
+├── notification-service/ # In-app notifications
+├── db-init/           # MySQL initialization scripts
+├── docker-compose.yml
+├── Jenkinsfile        # Jenkins CD pipeline
+└── .github/workflows/ # GitHub Actions CI
+```
+
+## 🏗️ CI/CD Pipeline
+
+### GitHub Actions (CI)
+- Triggers on push to `main` and `develop`
+- Builds all 8 Spring Boot services in parallel
+- Runs unit tests
+- Builds frontend
+- Pushes Docker images to GitHub Container Registry
+
+### Jenkins (CD)
+- Full pipeline: checkout → build → test → package → Docker → deploy
+- Health checks after deployment
+- Configure `Jenkinsfile` with your registry and credentials
+
+## 📊 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + Vite + React Router |
+| Backend | Spring Boot 3.2 + Java 17 |
+| Build | Maven 3.9 |
+| Database | MySQL 8.0 |
+| Cache | Redis 7 |
+| Payments | **Razorpay** |
+| Container | Docker + Docker Compose |
+| CI | GitHub Actions |
+| CD | Jenkins |
+| API Gateway | Spring Cloud Gateway |
+| Auth | JWT (jjwt) |
+| Styling | Vanilla CSS (custom design system) |
+
+## 🔒 Security
+
+- JWT-based authentication with 24-hour token expiry
+- Razorpay HMAC-SHA256 signature verification (server-side)
+- BCrypt password hashing
+- CORS configured for development (tighten for production)
+- Role-based access control (ADMIN / CUSTOMER)
+
+## 📝 API Endpoints
+
+### Auth
+- `POST /api/auth/register` — Register new user
+- `POST /api/auth/login` — Login, returns JWT
+
+### Books
+- `GET /api/books` — List all books (paginated)
+- `GET /api/books/{id}` — Get book details
+- `GET /api/books/search?keyword=` — Search books
+- `GET /api/books/featured` — Featured books
+
+### Orders
+- `POST /api/orders` — Create order
+- `GET /api/orders/user/{userId}` — Get user's orders
+
+### Payments
+- `POST /api/payments/create-order` — Create Razorpay order
+- `POST /api/payments/verify` — Verify payment signature
 
 ---
 
-## 🔄 Jenkins CI/CD
-
-This project includes Jenkins pipeline configuration using: `Jenkinsfile`
-
-Pipeline supports:
-- ✅ Automated builds
-- 🐳 Docker image creation
-- 🔄 CI/CD workflow
-- 🚀 Microservices deployment
-
----
-
-## 🌟 Highlights
-
-- 🧩 Scalable Microservices Architecture
-- 🎨 Premium Modern UI
-- 🐳 Dockerized Full Stack Deployment
-- ☁️ Railway Cloud Deployment
-- 🔄 GitHub Actions CI/CD (auto-deploy on push)
-- 📚 Realistic Book Catalog (25 books, 8 categories)
-- 📱 Responsive & Interactive Frontend
-- ⚡ Fast API Communication
-- 🌐 API Gateway Based Architecture
+**Built with ❤️ for INT322 Project — Novello Microservices Online Bookstore**

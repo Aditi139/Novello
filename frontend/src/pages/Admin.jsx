@@ -45,25 +45,25 @@ export default function Admin() {
     try {
       if (activeTab === 'dashboard' || activeTab === 'books') {
         const [bRes, cRes] = await Promise.all([booksApi.getAll(0, 50), categoriesApi.getAll()])
-        setBooks(bRes.data.content || [])
-        setCategories(cRes.data)
+        setBooks(bRes.data && Array.isArray(bRes.data.content) ? bRes.data.content : [])
+        setCategories(Array.isArray(cRes.data) ? cRes.data : [])
       }
       if (activeTab === 'orders' || activeTab === 'dashboard') {
         const oRes = await ordersApi.getAll()
-        setOrders(oRes.data)
+        setOrders(Array.isArray(oRes.data) ? oRes.data : [])
       }
       if (activeTab === 'users') {
         const uRes = await usersApi.getAll()
-        setUsers(uRes.data)
+        setUsers(Array.isArray(uRes.data) ? uRes.data : [])
       }
       if (activeTab === 'inventory') {
         const [iRes, cRes] = await Promise.all([inventoryApi.getAll(), categoriesApi.getAll()])
-        setInventory(iRes.data)
-        setCategories(cRes.data)
+        setInventory(Array.isArray(iRes.data) ? iRes.data : [])
+        setCategories(Array.isArray(cRes.data) ? cRes.data : [])
       }
       if (activeTab === 'payments') {
         const pRes = await paymentsApi.getAll()
-        setPayments(pRes.data)
+        setPayments(Array.isArray(pRes.data) ? pRes.data : [])
       }
     } catch (e) {
       // silently fail
@@ -156,8 +156,10 @@ export default function Admin() {
   }
 
   // Stats
-  const totalRevenue = payments.filter(p => p.status === 'SUCCESS').reduce((s, p) => s + Number(p.amount), 0)
-  const paidOrders = orders.filter(o => o.status === 'PAID' || o.status === 'DELIVERED' || o.status === 'PROCESSING').length
+  const validPayments = Array.isArray(payments) ? payments : []
+  const validOrders = Array.isArray(orders) ? orders : []
+  const totalRevenue = validPayments.filter(p => p.status === 'SUCCESS').reduce((s, p) => s + Number(p.amount), 0)
+  const paidOrders = validOrders.filter(o => o.status === 'PAID' || o.status === 'DELIVERED' || o.status === 'PROCESSING').length
 
   return (
     <div className="admin-layout">
@@ -187,8 +189,8 @@ export default function Admin() {
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.75rem', marginBottom: '2rem' }}>Dashboard</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2.5rem' }}>
               {[
-                { label: 'Total Books', value: books.length, icon: <BookOpen size={22} />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
-                { label: 'Total Orders', value: orders.length, icon: <ShoppingBag size={22} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+                { label: 'Total Books', value: Array.isArray(books) ? books.length : 0, icon: <BookOpen size={22} />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+                { label: 'Total Orders', value: Array.isArray(orders) ? orders.length : 0, icon: <ShoppingBag size={22} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
                 { label: 'Paid Orders', value: paidOrders, icon: <TrendingUp size={22} />, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
                 { label: 'Total Revenue', value: `₹${totalRevenue.toFixed(0)}`, icon: '💰', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', isText: true },
               ].map((stat, i) => (
@@ -214,7 +216,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.slice(0, 5).map(o => (
+                  {Array.isArray(orders) && orders.slice(0, 5).map(o => (
                     <tr key={o.id}>
                       <td><code style={{ color: 'var(--purple-400)' }}>{o.orderNumber}</code></td>
                       <td style={{ color: 'var(--gold)' }}>₹{Number(o.totalAmount).toFixed(2)}</td>
@@ -269,7 +271,7 @@ export default function Admin() {
                         <label className="form-label">Category</label>
                         <select className="form-select" value={bookForm.categoryId} onChange={e => setBookForm({...bookForm, categoryId: e.target.value})}>
                           <option value="">Select category</option>
-                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
                     </div>
@@ -333,7 +335,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {books.map(book => (
+                  {Array.isArray(books) && books.map(book => (
                     <tr key={book.id}>
                       <td>
                         {book.coverImageUrl
@@ -381,7 +383,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(o => (
+                  {Array.isArray(orders) && orders.map(o => (
                     <tr key={o.id}>
                       <td><code style={{ color: 'var(--purple-400)', fontSize: '0.8rem' }}>{o.orderNumber}</code></td>
                       <td style={{ color: 'var(--text-secondary)' }}>{o.userId}</td>
@@ -427,7 +429,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {inventory.map(inv => (
+                  {Array.isArray(inventory) && inventory.map(inv => (
                     <tr key={inv.id}>
                       <td style={{ color: 'var(--purple-400)' }}>#{inv.bookId}</td>
                       <td style={{ fontWeight: 700, fontSize: '1.1rem' }}>{inv.quantity}</td>
@@ -467,7 +469,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map(u => (
+                  {Array.isArray(users) && users.map(u => (
                     <tr key={u.id}>
                       <td style={{ fontWeight: 500 }}>{u.firstName} {u.lastName}</td>
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{u.email}</td>
@@ -525,7 +527,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map(p => (
+                  {Array.isArray(payments) && payments.map(p => (
                     <tr key={p.id}>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>#{p.id}</td>
                       <td style={{ color: 'var(--purple-400)' }}>#{p.orderId}</td>

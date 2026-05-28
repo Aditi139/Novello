@@ -31,8 +31,9 @@ export default function Checkout() {
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [completedOrder, setCompletedOrder] = useState(null)
 
-  const hasHardcopy = cart.some(item => item.itemType === 'HARDCOPY')
-  const hasEbook = cart.some(item => item.itemType === 'EBOOK')
+  const currentCart = Array.isArray(cart) ? cart : []
+  const hasHardcopy = currentCart.some(item => item.itemType === 'HARDCOPY')
+  const hasEbook = currentCart.some(item => item.itemType === 'EBOOK')
   const steps = [
     'Cart Review',
     hasHardcopy ? 'Shipping' : 'Delivery Email',
@@ -70,7 +71,7 @@ export default function Checkout() {
       const orderRes = await ordersApi.create({
         userId: user.id,
         shippingAddress,
-        items: cart.map(item => ({
+        items: currentCart.map(item => ({
           bookId: item.bookId,
           bookTitle: item.bookTitle,
           bookAuthor: item.bookAuthor,
@@ -298,7 +299,7 @@ export default function Checkout() {
             {step === 0 && (
               <div className="card" style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontWeight: 700, marginBottom: '1.5rem' }}>Review Your Items</h3>
-                {cart.map((item, idx) => (
+                {currentCart.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.875rem 0', borderBottom: '1px solid var(--border)' }}>
                     <div style={{ fontSize: '1.75rem' }}>📚</div>
                     <div style={{ flex: 1 }}>
@@ -468,7 +469,7 @@ export default function Checkout() {
           <div className="card" style={{ padding: '1.5rem', position: 'sticky', top: '90px' }}>
             <h3 style={{ fontWeight: 700, marginBottom: '1.25rem', fontSize: '0.95rem' }}>Order Summary</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-              {cart.map((item, i) => (
+              {currentCart.map((item, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--text-secondary)' }} className="text-truncate">{item.bookTitle} ×{item.quantity}</span>
                   <span>₹{(Number(item.unitPrice) * item.quantity).toFixed(2)}</span>

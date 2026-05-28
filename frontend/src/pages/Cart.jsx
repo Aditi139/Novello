@@ -9,7 +9,7 @@ export default function Cart() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
 
-  if (cart.length === 0) {
+  if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="page">
         <div className="container">
@@ -41,7 +41,7 @@ export default function Cart() {
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '2rem' }}>
             Shopping Cart
             <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: '0.75rem' }}>
-              ({cart.length} {cart.length === 1 ? 'item' : 'items'})
+              ({Array.isArray(cart) ? cart.length : 0} {(Array.isArray(cart) && cart.length === 1) ? 'item' : 'items'})
             </span>
           </h1>
           <button className="btn btn-danger btn-sm" onClick={clearCart} id="cart-clear-btn">
@@ -52,7 +52,7 @@ export default function Cart() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '2rem', alignItems: 'start' }}>
           {/* Cart Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {cart.map((item, idx) => (
+            {Array.isArray(cart) && cart.map((item, idx) => (
               <div key={idx} className="cart-item">
                 {/* Cover */}
                 <div style={{
@@ -144,7 +144,7 @@ export default function Cart() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                <span>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                <span>Subtotal ({Array.isArray(cart) ? cart.reduce((s, i) => s + i.quantity, 0) : 0} items)</span>
                 <span>₹{getTotalPrice().toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>

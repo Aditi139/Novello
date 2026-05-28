@@ -22,7 +22,9 @@ export default function Catalog() {
   const [selectedType, setSelectedType] = useState(bookType)
 
   useEffect(() => {
-    categoriesApi.getAll().then(r => setCategories(r.data)).catch(() => {})
+    categoriesApi.getAll()
+      .then(r => setCategories(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setCategories([]))
   }, [])
 
   const fetchBooks = useCallback(async () => {
@@ -38,8 +40,8 @@ export default function Catalog() {
       } else {
         res = await booksApi.getAll(page)
       }
-      const data = res.data
-      setBooks(data.content || [])
+      const data = res.data || {}
+      setBooks(Array.isArray(data.content) ? data.content : [])
       setTotalPages(data.totalPages || 0)
       setTotalElements(data.totalElements || 0)
     } catch {
@@ -142,7 +144,7 @@ export default function Catalog() {
         </div>
 
         {/* Category Pills */}
-        {categories.length > 0 && (
+        {Array.isArray(categories) && categories.length > 0 && (
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</div>
             <div className="category-pills">
@@ -170,7 +172,7 @@ export default function Catalog() {
         {/* Books Grid */}
         {loading ? (
           <div className="loading-page"><div className="spinner" /></div>
-        ) : books.length > 0 ? (
+        ) : (Array.isArray(books) && books.length > 0) ? (
           <>
             <div className="books-grid">
               {books.map(book => <BookCard key={book.id} book={book} />)}

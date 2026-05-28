@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, BookOpen, Star } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import toast from 'react-hot-toast'
 
@@ -91,6 +91,10 @@ export default function BookCard({ book }) {
             {cardOriginalPrice && cardOriginalPrice > cardPrice && (
               <div className="book-price-original">₹{Number(cardOriginalPrice).toFixed(2)}</div>
             )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--gold)' }}>
+            <Star size={12} fill="currentColor" />
+            {book.rating?.toFixed(1) || '4.5'}
           </div>
         </div>
       </div>

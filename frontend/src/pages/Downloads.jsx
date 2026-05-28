@@ -14,14 +14,17 @@ export default function Downloads() {
     if (user) {
       ordersApi.getByUser(user.id)
         .then(r => {
+          const data = Array.isArray(r.data) ? r.data : []
           // Filter orders that have eBook items and are PAID
-          const paid = r.data.filter(o =>
+          const paid = data.filter(o =>
             o.status === 'PAID' || o.status === 'DELIVERED' || o.status === 'PROCESSING'
           )
           const ebookItems = paid.flatMap(order =>
-            (order.items || [])
-              .filter(item => item.itemType === 'EBOOK')
-              .map(item => ({ ...item, orderId: order.id, orderNumber: order.orderNumber }))
+            Array.isArray(order.items)
+              ? order.items
+                  .filter(item => item.itemType === 'EBOOK')
+                  .map(item => ({ ...item, orderId: order.id, orderNumber: order.orderNumber }))
+              : []
           )
           setEbookOrders(ebookItems)
         })
@@ -64,7 +67,7 @@ export default function Downloads() {
           Access all your purchased eBooks. Downloads are valid for 7 days per session.
         </p>
 
-        {ebookOrders.length === 0 ? (
+        {(!Array.isArray(ebookOrders) || ebookOrders.length === 0) ? (
           <div className="empty-state">
             <div className="empty-state-icon">📱</div>
             <h3>No eBooks yet</h3>

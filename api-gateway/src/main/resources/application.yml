@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:${SERVER_PORT:8080}}
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -8,9 +8,6 @@ spring:
     redis:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
-      password: ${SPRING_REDIS_PASSWORD:}
-      ssl:
-        enabled: ${SPRING_REDIS_SSL:false}
   cloud:
     gateway:
       globalcors:
@@ -104,6 +101,3 @@ management:
   endpoint:
     health:
       show-details: always
-  health:
-    redis:
-      enabled: false

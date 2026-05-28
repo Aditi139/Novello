@@ -16,13 +16,14 @@ export default function Home() {
       booksApi.getTopRated(),
       categoriesApi.getAll(),
     ]).then(([featured, rated, cats]) => {
-      setFeaturedBooks(featured.data)
-      setTopRated(rated.data)
-      setCategories(cats.data.slice(0, 8))
+      setFeaturedBooks(Array.isArray(featured.data) ? featured.data : [])
+      setTopRated(Array.isArray(rated.data) ? rated.data : [])
+      setCategories(Array.isArray(cats.data) ? cats.data.slice(0, 8) : [])
     }).catch(() => {
       // Demo: show placeholders
       setFeaturedBooks([])
       setTopRated([])
+      setCategories([])
     }).finally(() => setLoading(false))
   }, [])
 
@@ -121,7 +122,7 @@ export default function Home() {
       </section>
 
       {/* ── Categories ────────────────────────────────────── */}
-      {categories.length > 0 && (
+      {Array.isArray(categories) && categories.length > 0 && (
         <section style={{ padding: '4rem 0' }}>
           <div className="container">
             <h2 className="section-title">Browse by Genre</h2>
@@ -152,7 +153,7 @@ export default function Home() {
           </div>
           {loading ? (
             <div className="loading-page"><div className="spinner" /></div>
-          ) : featuredBooks.length > 0 ? (
+          ) : (Array.isArray(featuredBooks) && featuredBooks.length > 0) ? (
             <div className="books-grid">
               {featuredBooks.map(book => <BookCard key={book.id} book={book} />)}
             </div>
@@ -167,7 +168,7 @@ export default function Home() {
       </section>
 
       {/* ── Top Rated ──────────────────────────────────────── */}
-      {topRated.length > 0 && (
+      {Array.isArray(topRated) && topRated.length > 0 && (
         <section style={{ padding: '2rem 0 4rem', background: 'var(--bg-secondary)' }}>
           <div className="container">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>

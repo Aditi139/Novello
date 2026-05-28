@@ -38,10 +38,13 @@ export default function Navbar() {
     if (!showNotif && user) {
       try {
         const r = await notificationsApi.getByUser(user.id)
-        setNotifications(r.data.slice(0, 8))
+        const data = Array.isArray(r.data) ? r.data : []
+        setNotifications(data.slice(0, 8))
         await notificationsApi.markAllRead(user.id)
         setUnreadCount(0)
-      } catch {}
+      } catch {
+        setNotifications([])
+      }
     }
   }
 
@@ -96,7 +99,7 @@ export default function Navbar() {
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', fontWeight: 600, fontSize: '0.875rem' }}>
                     Notifications
                   </div>
-                  {notifications.length === 0 ? (
+                  {(!Array.isArray(notifications) || notifications.length === 0) ? (
                     <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                       No notifications
                     </div>

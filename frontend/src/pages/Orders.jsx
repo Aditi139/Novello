@@ -22,7 +22,7 @@ export default function Orders() {
   useEffect(() => {
     if (user) {
       ordersApi.getByUser(user.id)
-        .then(r => setOrders(r.data))
+        .then(r => setOrders(Array.isArray(r.data) ? r.data : []))
         .catch(() => setOrders([]))
         .finally(() => setLoading(false))
     }
@@ -36,7 +36,7 @@ export default function Orders() {
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '2rem', marginBottom: '0.5rem' }}>My Orders</h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Track and manage your book orders</p>
 
-        {orders.length === 0 ? (
+        {(!Array.isArray(orders) || orders.length === 0) ? (
           <div className="empty-state">
             <div className="empty-state-icon">📦</div>
             <h3>No orders yet</h3>
@@ -69,9 +69,8 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* Items */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                    {order.items?.map(item => (
+                    {Array.isArray(order.items) && order.items.map(item => (
                       <div key={item.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius)' }}>
                         <span style={{ fontSize: '1.25rem' }}>📚</span>
                         <div style={{ flex: 1, minWidth: 0 }}>

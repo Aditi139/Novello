@@ -7,25 +7,34 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     const saved = localStorage.getItem('novello_cart')
-    if (saved) setCart(JSON.parse(saved))
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        setCart(Array.isArray(parsed) ? parsed : [])
+      } catch {
+        setCart([])
+      }
+    }
   }, [])
 
   const saveCart = (items) => {
-    setCart(items)
-    localStorage.setItem('novello_cart', JSON.stringify(items))
+    const validItems = Array.isArray(items) ? items : []
+    setCart(validItems)
+    localStorage.setItem('novello_cart', JSON.stringify(validItems))
   }
 
   const addToCart = (book, itemType = 'HARDCOPY') => {
+    const currentCart = Array.isArray(cart) ? cart : []
     const unitPrice = itemType === 'EBOOK' ? Number((book.price * 0.5).toFixed(2)) : Number(book.price)
-    const existing = cart.find((i) => i.bookId === book.id && i.itemType === itemType)
+    const existing = currentCart.find((i) => i.bookId === book.id && i.itemType === itemType)
     if (existing) {
-      saveCart(cart.map((i) =>
+      saveCart(currentCart.map((i) =>
         i.bookId === book.id && i.itemType === itemType
           ? { ...i, quantity: i.quantity + 1 }
           : i
       ))
     } else {
-      saveCart([...cart, {
+      saveCart([...currentCart, {
         bookId: book.id,
         bookTitle: book.title,
         bookAuthor: book.author,
@@ -39,7 +48,8 @@ export const CartProvider = ({ children }) => {
   }
 
   const removeFromCart = (bookId, itemType) => {
-    saveCart(cart.filter((i) => !(i.bookId === bookId && i.itemType === itemType)))
+    const currentCart = Array.isArray(cart) ? cart : []
+    saveCart(currentCart.filter((i) => !(i.bookId === bookId && i.itemType === itemType)))
   }
 
   const updateQuantity = (bookId, itemType, quantity) => {
@@ -47,7 +57,8 @@ export const CartProvider = ({ children }) => {
       removeFromCart(bookId, itemType)
       return
     }
-    saveCart(cart.map((i) =>
+    const currentCart = Array.isArray(cart) ? cart : []
+    saveCart(currentCart.map((i) =>
       i.bookId === bookId && i.itemType === itemType ? { ...i, quantity } : i
     ))
   }
@@ -55,10 +66,11 @@ export const CartProvider = ({ children }) => {
   const switchFormat = (bookId, currentItemType, newFormat) => {
     if (currentItemType === newFormat) return
 
-    const itemToSwitch = cart.find((i) => i.bookId === bookId && i.itemType === currentItemType)
+    const currentCart = Array.isArray(cart) ? cart : []
+    const itemToSwitch = currentCart.find((i) => i.bookId === bookId && i.itemType === currentItemType)
     if (!itemToSwitch) return
 
-    const remaining = cart.filter((i) => !(i.bookId === bookId && i.itemType === currentItemType))
+    const remaining = currentCart.filter((i) => !(i.bookId === bookId && i.itemType === currentItemType))
     const existingNewFormatItem = remaining.find((i) => i.bookId === bookId && i.itemType === newFormat)
 
     let originalPrice = Number(itemToSwitch.unitPrice)
@@ -94,10 +106,15 @@ export const CartProvider = ({ children }) => {
     }])
   }
 
-  const getTotalItems = () => cart.reduce((sum, i) => sum + i.quantity, 0)
+  const getTotalItems = () => {
+    const currentCart = Array.isArray(cart) ? cart : []
+    return currentCart.reduce((sum, i) => sum + i.quantity, 0)
+  }
 
-  const getTotalPrice = () =>
-    cart.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
+  const getTotalPrice = () => {
+    const currentCart = Array.isArray(cart) ? cart : []
+    return currentCart.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
+  }
 
   return (
     <CartContext.Provider value={{
