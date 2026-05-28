@@ -12,15 +12,15 @@ export default function Home() {
 
   useEffect(() => {
     Promise.all([
-      booksApi.getFeatured(),
-      booksApi.getTopRated(),
-      categoriesApi.getAll(),
+      booksApi.getFeatured().catch(() => ({ data: [] })),
+      booksApi.getTopRated().catch(() => ({ data: [] })),
+      categoriesApi.getAll().catch(() => ({ data: [] })),
     ]).then(([featured, rated, cats]) => {
       setFeaturedBooks(Array.isArray(featured.data) ? featured.data : [])
       setTopRated(Array.isArray(rated.data) ? rated.data : [])
       setCategories(Array.isArray(cats.data) ? cats.data.slice(0, 8) : [])
     }).catch(() => {
-      // Demo: show placeholders
+      // Fallback
       setFeaturedBooks([])
       setTopRated([])
       setCategories([])
