@@ -191,4 +191,4 @@ novello/
 
 ---
 
-**Built with ❤️ for INT322 Project — Novello Microservices Online Bookstore**
+
